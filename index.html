@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Recepción | La Frontera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#1a2340',
+                        'brand-gold': '#bfa67a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ocultar contenido hasta loguearse */
+        #app-content { filter: blur(5px); pointer-events: none; }
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a2340; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans pb-10">
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-overlay">
+        <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-sm w-full">
+            <i class="fa-solid fa-lock text-brand-gold text-4xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-brand-blue mb-2">Acceso Restringido</h2>
+            <p class="text-gray-500 mb-6 text-sm">Panel de Administración La Frontera</p>
+            <input type="password" id="passwordInput" placeholder="Ingresa el PIN" class="w-full border-2 border-gray-300 rounded p-3 text-center text-xl mb-4 focus:border-brand-gold focus:outline-none">
+            <button onclick="verificarPassword()" class="w-full bg-brand-blue text-white font-bold py-3 rounded hover:bg-opacity-90 transition">ENTRAR</button>
+            <p id="errorMsg" class="text-red-500 text-xs mt-3 hidden">PIN Incorrecto</p>
+        </div>
+    </div>
+
+    <!-- CONTENIDO DE LA APP -->
+    <div id="app-content">
+        <!-- Header -->
+        <header class="bg-brand-blue text-white p-4 shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-hotel text-brand-gold text-2xl"></i>
+                    <div>
+                        <h1 class="font-bold text-xl tracking-wide">LA FRONTERA</h1>
+                        <p class="text-xs text-brand-gold uppercase tracking-widest">Panel de Recepción</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm opacity-80" id="fechaActual">Hoy: Cargando...</p>
+                    <button onclick="cerrarSesion()" class="text-xs text-brand-gold hover:underline mt-1">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-4 flex flex-col lg:flex-row gap-6 items-start justify-center">
+            
+            <!-- COLUMNA IZQUIERDA: Formulario -->
+            <div class="bg-white w-full lg:w-1/3 rounded-xl shadow-xl overflow-hidden order-2 lg:order-1">
+                <div class="bg-brand-gold p-4 text-brand-blue font-bold text-center text-lg">
+                    <i class="fa-solid fa-plus-circle mr-2"></i> Nueva Reserva
+                </div>
+
+                <form id="reservaForm" class="p-6 space-y-4">
+                    
+                    <!-- Datos del Huésped -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">Nombre del Huésped</label>
+                        <input type="text" id="nombre" class="w-full border-2 border-gray-200 rounded p-2 focus:border-brand-blue focus:outline-none" placeholder="Ej: Juan Perez" required>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">Entrada (Check-in)</label>
+                            <input type="date" id="entrada" class="w-full border-2 border-gray-200 rounded p-2 focus:border-brand-blue focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">Salida (Check-out)</label>
+                            <input type="date" id="salida" class="w-full border-2 border-gray-200 rounded p-2 focus:border-brand-blue focus:outline-none" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">Habitación</label>
+                            <select id="habitacion" class="w-full border-2 border-gray-200 rounded p-2 focus:border-brand-blue focus:outline-none bg-white">
+                                <option value="Habitación 1">Habitación 1</option>
+                                <option value="Habitación 2">Habitación 2</option>
+                                <option value="Habitación 3">Habitación 3</option>
+                                <option value="Habitación 4">Habitación 4</option>
+                                <option value="Departamento">Departamento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">Estado Pago</label>
+                            <select id="estado" class="w-full border-2 border-gray-200 rounded p-2 focus:border-brand-blue focus:outline-none bg-white font-bold">
+                                <option value="🟡 SEÑA PENDIENTE" class="text-yellow-600">🟡 Seña Pendiente</option>
+                                <option value="🟢 CONFIRMADO (Señado)" class="text-green-600" selected>🟢 Confirmado (Señado)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Detalles Financieros -->
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="grid grid-cols-2 gap-4 mb-2">
+                            <div>
+                                <label class="block text-gray-500 text-xs font-bold mb-1">Total a Pagar ($)</label>
+                                <input type="number" id="total" class="w-full border border-gray-300 rounded p-1 text-sm" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 text-xs font-bold mb-1">Seña Recibida ($)</label>
+                                <input type="number" id="sena" class="w-full border border-gray-300 rounded p-1 text-sm" placeholder="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-xs font-bold mb-1">Teléfono Cliente</label>
+                            <input type="tel" id="telefono" class="w-full border border-gray-300 rounded p-1 text-sm" placeholder="Sólo números">
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="pt-4 space-y-3">
+                        <button type="button" onclick="procesarReserva()" class="w-full bg-brand-blue text-white font-bold py-3 rounded-lg shadow hover:bg-opacity-90 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> 1. AGENDAR Y AVISAR
+                        </button>
+                        <p class="text-xs text-center text-gray-400">Esto guarda la reserva, abre WhatsApp y Google Calendar.</p>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- COLUMNA DERECHA: Estado y Resumen -->
+            <div class="w-full lg:w-1/3 space-y-6 order-1 lg:order-2">
+                
+                <!-- NUEVO: ESTADO DE HABITACIONES HOY -->
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden border-t-4 border-brand-blue">
+                    <div class="p-3 bg-gray-50 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700"><i class="fa-solid fa-bed mr-2 text-brand-blue"></i> ESTADO HOY</h3>
+                        <span class="text-xs text-gray-400">Actualizado al instante</span>
+                    </div>
+                    <div id="gridHabitaciones" class="divide-y divide-gray-100">
+                        <!-- Aquí se inyecta el estado de las habitaciones -->
+                        <div class="p-4 text-center text-gray-400">Calculando disponibilidad...</div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de Cierre de Mes -->
+                <div class="bg-brand-blue text-white rounded-xl shadow-xl overflow-hidden">
+                    <div class="p-4 bg-gray-900 flex justify-between items-center">
+                        <h3 class="font-bold"><i class="fa-solid fa-chart-pie mr-2"></i> Resumen del Mes</h3>
+                        <span id="mesActual" class="text-xs bg-brand-gold text-brand-blue px-2 py-1 rounded font-bold uppercase"></span>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                            <div>
+                                <p class="text-gray-400 text-xs uppercase">Reservas</p>
+                                <p class="text-2xl font-bold" id="resumenCantidad">0</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400 text-xs uppercase">Señas Cobradas</p>
+                                <p class="text-2xl font-bold text-green-400" id="resumenSenas">$0</p>
+                            </div>
+                        </div>
+                        <button onclick="enviarResumenWhatsapp()" class="w-full bg-brand-gold text-brand-blue font-bold py-2 rounded hover:bg-white transition">
+                            <i class="fa-brands fa-whatsapp mr-1"></i> ENVIAR CIERRE A DUEÑOS
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de Últimos Movimientos -->
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+                    <div class="p-3 bg-gray-100 border-b flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-gray-600">Historial Reciente</h3>
+                        <button onclick="borrarHistorial()" class="text-xs text-red-400 hover:text-red-600">Borrar todo</button>
+                    </div>
+                    <div class="max-h-48 overflow-y-auto" id="listaReservas">
+                        <!-- Aquí se inyectan las reservas JS -->
+                        <div class="p-4 text-center text-gray-400 text-sm">No hay reservas registradas aún.</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- SISTEMA DE LOGIN SIMPLE ---
+        // Puedes cambiar "2024" por la contraseña que quieras
+        const PIN_CORRECTO = "2024"; 
+
+        function verificarPassword() {
+            const input = document.getElementById('passwordInput').value;
+            if(input === PIN_CORRECTO) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-content').style.filter = 'none';
+                document.getElementById('app-content').style.pointerEvents = 'auto';
+                localStorage.setItem('lafrontera_auth', 'true');
+            } else {
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('lafrontera_auth');
+            location.reload();
+        }
+
+        // Verificar si ya estaba logueado
+        if(localStorage.getItem('lafrontera_auth') === 'true') {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-content').style.filter = 'none';
+            document.getElementById('app-content').style.pointerEvents = 'auto';
+        }
+
+        // --- 1. CONFIGURACIÓN INICIAL ---
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const hoy = new Date();
+        document.getElementById('fechaActual').innerText = hoy.toLocaleDateString('es-AR', options);
+        document.getElementById('mesActual').innerText = hoy.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+
+        // Lista fija de habitaciones
+        const habitacionesFijas = ['Habitación 1', 'Habitación 2', 'Habitación 3', 'Habitación 4', 'Departamento'];
+
+        // Cargar datos guardados al iniciar
+        let historialReservas = JSON.parse(localStorage.getItem('reservas_la_frontera')) || [];
+        actualizarUI();
+
+        // --- 2. FUNCIÓN PRINCIPAL: PROCESAR RESERVA ---
+        function procesarReserva() {
+            // Capturar datos
+            const nombre = document.getElementById('nombre').value;
+            const entrada = document.getElementById('entrada').value;
+            const salida = document.getElementById('salida').value;
+            const habitacion = document.getElementById('habitacion').value;
+            const estado = document.getElementById('estado').value;
+            const total = document.getElementById('total').value || "0";
+            const sena = document.getElementById('sena').value || "0";
+            const telefono = document.getElementById('telefono').value || "No especificado";
+            const saldo = parseInt(total) - parseInt(sena);
+
+            if(!nombre || !entrada || !salida) {
+                alert("Por favor completa nombre y fechas.");
+                return;
+            }
+
+            // --- A. GUARDAR EN MEMORIA (LOCALSTORAGE) ---
+            const nuevaReserva = {
+                id: Date.now(), // ID único
+                fechaRegistro: new Date().toISOString(),
+                nombre, habitacion, entrada, salida, total: parseInt(total), sena: parseInt(sena), estado
+            };
+            
+            historialReservas.unshift(nuevaReserva); // Agregar al principio
+            localStorage.setItem('reservas_la_frontera', JSON.stringify(historialReservas));
+            actualizarUI(); 
+
+            // --- B. ABRIR HERRAMIENTAS EXTERNAS ---
+            const startStr = entrada.replace(/-/g, '');
+            const endStr = salida.replace(/-/g, '');
+            const detallesCalendar = `Cliente: ${nombre}%0ATel: ${telefono}%0AEstado: ${estado}%0A%0ATotal: $${total}%0ASeña: $${sena}%0ASaldo a cobrar: $${saldo}`;
+            const tituloEvento = encodeURIComponent(`${nombre} - ${habitacion}`);
+            const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${tituloEvento}&dates=${startStr}/${endStr}&details=${detallesCalendar}&location=Hospedaje La Frontera, Itatí`;
+
+            const mensajeWhatsapp = `🔔 *NUEVA RESERVA*%0A%0A` +
+                                    `👤 ${nombre} (${habitacion})%0A` +
+                                    `📅 ${entrada} al ${salida}%0A` +
+                                    `💰 Seña: $${sena} / Resta: $${saldo}%0A` +
+                                    `⚠️ ${estado}`;
+            const whatsappUrl = `https://wa.me/?text=${mensajeWhatsapp}`;
+
+            window.open(whatsappUrl, '_blank');
+            setTimeout(() => { window.open(calendarUrl, '_blank'); }, 1000);
+            
+            document.getElementById('reservaForm').reset();
+        }
+
+        // --- 3. ACTUALIZAR INTERFAZ Y TOTALES ---
+        function actualizarUI() {
+            actualizarListaHistorial();
+            actualizarResumenMes();
+            actualizarEstadoHabitaciones();
+        }
+
+        function actualizarEstadoHabitaciones() {
+            const grid = document.getElementById('gridHabitaciones');
+            grid.innerHTML = '';
+
+            // Fecha de hoy en formato YYYY-MM-DD para comparar strings
+            const fechaHoyObj = new Date();
+            const year = fechaHoyObj.getFullYear();
+            const month = String(fechaHoyObj.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaHoyObj.getDate()).padStart(2, '0');
+            const hoyStr = `${year}-${month}-${day}`;
+
+            habitacionesFijas.forEach(hab => {
+                const ocupacion = historialReservas.find(r => {
+                    return r.habitacion === hab && r.entrada <= hoyStr && r.salida >= hoyStr;
+                });
+
+                let htmlEstado = '';
+                
+                if (ocupacion) {
+                    if (ocupacion.salida === hoyStr) {
+                        htmlEstado = `
+                            <div class="flex items-center gap-2">
+                                <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold w-20 text-center">SALE HOY</span>
+                                <div class="text-sm">
+                                    <p class="font-bold text-gray-700">${ocupacion.nombre}</p>
+                                    <p class="text-xs text-gray-400">Limpieza pendiente</p>
+                                </div>
+                            </div>`;
+                    } else {
+                        const partesSalida = ocupacion.salida.split('-');
+                        const salidaVisual = `${partesSalida[2]}/${partesSalida[1]}`;
+                        htmlEstado = `
+                            <div class="flex items-center gap-2">
+                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold w-20 text-center">OCUPADO</span>
+                                <div class="text-sm">
+                                    <p class="font-bold text-gray-700">${ocupacion.nombre}</p>
+                                    <p class="text-xs text-gray-500">Hasta el ${salidaVisual}</p>
+                                </div>
+                            </div>`;
+                    }
+                } else {
+                    htmlEstado = `
+                        <div class="flex items-center gap-2">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold w-20 text-center">LIBRE</span>
+                            <div class="text-sm">
+                                <p class="text-xs text-gray-400">Disponible para check-in</p>
+                            </div>
+                        </div>`;
+                }
+
+                grid.innerHTML += `
+                    <div class="p-3 flex items-center justify-between hover:bg-gray-50 transition">
+                        <span class="font-bold text-sm text-brand-blue">${hab}</span>
+                        ${htmlEstado}
+                    </div>
+                `;
+            });
+        }
+
+        function actualizarListaHistorial() {
+            const lista = document.getElementById('listaReservas');
+            lista.innerHTML = '';
+            if (historialReservas.length === 0) {
+                lista.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">No hay historial.</div>';
+                return;
+            }
+
+            historialReservas.slice(0, 20).forEach(reserva => {
+                const fecha = new Date(reserva.fechaRegistro).toLocaleDateString();
+                const fEntrada = reserva.entrada ? reserva.entrada.split('-').reverse().join('/') : '-';
+
+                lista.innerHTML += `
+                    <div class="p-3 border-b border-gray-100 flex justify-between items-center hover:bg-gray-50">
+                        <div>
+                            <p class="font-bold text-sm text-brand-blue">${reserva.nombre}</p>
+                            <p class="text-xs text-gray-500">Llega: ${fEntrada} - ${reserva.habitacion}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-green-600">+$${reserva.sena}</p>
+                            <button onclick="eliminarReserva(${reserva.id})" class="text-xs text-red-300 hover:text-red-500 underline">Borrar</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function actualizarResumenMes() {
+            const totalCantidad = document.getElementById('resumenCantidad');
+            const totalSenas = document.getElementById('resumenSenas');
+            
+            const mesActual = new Date().getMonth();
+            const yearActual = new Date().getFullYear();
+            
+            const reservasMes = historialReservas.filter(r => {
+                const fechaR = new Date(r.fechaRegistro);
+                return fechaR.getMonth() === mesActual && fechaR.getFullYear() === yearActual;
+            });
+
+            const sumaSenas = reservasMes.reduce((acc, curr) => acc + (curr.sena || 0), 0);
+            
+            totalCantidad.innerText = reservasMes.length;
+            totalSenas.innerText = `$${sumaSenas.toLocaleString('es-AR')}`;
+        }
+
+        function enviarResumenWhatsapp() {
+            const mesNombre = document.getElementById('mesActual').innerText;
+            const cantidad = document.getElementById('resumenCantidad').innerText;
+            const senas = document.getElementById('resumenSenas').innerText;
+            const mesActual = new Date().getMonth();
+            const yearActual = new Date().getFullYear();
+            const reservasMes = historialReservas.filter(r => {
+                const fechaR = new Date(r.fechaRegistro);
+                return fechaR.getMonth() === mesActual && fechaR.getFullYear() === yearActual;
+            });
+            const totalVendido = reservasMes.reduce((acc, curr) => acc + (curr.total || 0), 0);
+
+            const mensaje = `📊 *REPORTE MENSUAL - ${mesNombre.toUpperCase()}*%0A%0A` +
+                            `Hospedaje La Frontera%0A` +
+                            `--------------------------------%0A` +
+                            `✅ *Cant. Reservas:* ${cantidad}%0A` +
+                            `💵 *Total Señas (Caja):* ${senas}%0A` +
+                            `📈 *Venta Total Proyectada:* $${totalVendido.toLocaleString('es-AR')}%0A` +
+                            `--------------------------------%0A` +
+                            `Generado automáticamete desde Recepción.`;
+            
+            window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+        }
+
+        function eliminarReserva(id) {
+            if(confirm('¿Borrar esta reserva?')) {
+                historialReservas = historialReservas.filter(r => r.id !== id);
+                localStorage.setItem('reservas_la_frontera', JSON.stringify(historialReservas));
+                actualizarUI();
+            }
+        }
+
+        function borrarHistorial() {
+            if(confirm('ATENCIÓN: ¿Borrar todo?')) {
+                localStorage.removeItem('reservas_la_frontera');
+                historialReservas = [];
+                actualizarUI();
+            }
+        }
+    </script>
+</body>
+</html>
