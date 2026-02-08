@@ -125,9 +125,9 @@
                     <!-- Botones de Acción -->
                     <div class="pt-4 space-y-3">
                         <button type="button" onclick="procesarReserva()" class="w-full bg-brand-blue text-white font-bold py-3 rounded-lg shadow hover:bg-opacity-90 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-paper-plane"></i> 1. AGENDAR Y AVISAR
+                            <i class="fa-brands fa-whatsapp text-xl"></i> REGISTRAR Y AVISAR
                         </button>
-                        <p class="text-xs text-center text-gray-400">Esto guarda la reserva, abre WhatsApp y Google Calendar.</p>
+                        <p class="text-xs text-center text-gray-400">Esto guarda la reserva y abre WhatsApp automáticamente.</p>
                     </div>
 
                 </form>
@@ -189,10 +189,16 @@
     </div>
 
     <script>
-        // --- SISTEMA DE LOGIN SIMPLE ---
-        // Puedes cambiar "2024" por la contraseña que quieras
+        // --- CONFIGURACIÓN PRINCIPAL ---
+        // 1. Contraseña para entrar al panel
         const PIN_CORRECTO = "2024"; 
 
+        // 2. Vinculación con WhatsApp
+        // INGRESA AQUÍ EL NÚMERO DEL DUEÑO (ej: "5493794123456")
+        // Si lo dejas vacío "", preguntará a quién enviar.
+        const NUMERO_DUENOS = "5491171006165"; 
+
+        // --- SISTEMA DE LOGIN ---
         function verificarPassword() {
             const input = document.getElementById('passwordInput').value;
             if(input === PIN_CORRECTO) {
@@ -259,22 +265,17 @@
             localStorage.setItem('reservas_la_frontera', JSON.stringify(historialReservas));
             actualizarUI(); 
 
-            // --- B. ABRIR HERRAMIENTAS EXTERNAS ---
-            const startStr = entrada.replace(/-/g, '');
-            const endStr = salida.replace(/-/g, '');
-            const detallesCalendar = `Cliente: ${nombre}%0ATel: ${telefono}%0AEstado: ${estado}%0A%0ATotal: $${total}%0ASeña: $${sena}%0ASaldo a cobrar: $${saldo}`;
-            const tituloEvento = encodeURIComponent(`${nombre} - ${habitacion}`);
-            const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${tituloEvento}&dates=${startStr}/${endStr}&details=${detallesCalendar}&location=Hospedaje La Frontera, Itatí`;
-
+            // --- B. ABRIR WHATSAPP ---
             const mensajeWhatsapp = `🔔 *NUEVA RESERVA*%0A%0A` +
                                     `👤 ${nombre} (${habitacion})%0A` +
                                     `📅 ${entrada} al ${salida}%0A` +
                                     `💰 Seña: $${sena} / Resta: $${saldo}%0A` +
                                     `⚠️ ${estado}`;
-            const whatsappUrl = `https://wa.me/?text=${mensajeWhatsapp}`;
+            
+            // Usamos la variable de configuración para decidir el destino
+            const whatsappUrl = `https://wa.me/${NUMERO_DUENOS}?text=${mensajeWhatsapp}`;
 
             window.open(whatsappUrl, '_blank');
-            setTimeout(() => { window.open(calendarUrl, '_blank'); }, 1000);
             
             document.getElementById('reservaForm').reset();
         }
@@ -411,7 +412,8 @@
                             `--------------------------------%0A` +
                             `Generado automáticamete desde Recepción.`;
             
-            window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+            const whatsappUrl = `https://wa.me/${NUMERO_DUENOS}?text=${mensaje}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         function eliminarReserva(id) {
