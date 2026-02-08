@@ -196,7 +196,7 @@
         // 2. Vinculación con WhatsApp
         // INGRESA AQUÍ EL NÚMERO DEL DUEÑO (ej: "5493794123456")
         // Si lo dejas vacío "", preguntará a quién enviar.
-        const NUMERO_DUENOS = "5491171006165"; 
+        const NUMERO_DUENOS = "5491159963755"; 
 
         // --- SISTEMA DE LOGIN ---
         function verificarPassword() {
@@ -266,11 +266,11 @@
             actualizarUI(); 
 
             // --- B. ABRIR WHATSAPP ---
-            const mensajeWhatsapp = `🔔 *NUEVA RESERVA*%0A%0A` +
-                                    `👤 ${nombre} (${habitacion})%0A` +
-                                    `📅 ${entrada} al ${salida}%0A` +
-                                    `💰 Seña: $${sena} / Resta: $${saldo}%0A` +
-                                    `⚠️ ${estado}`;
+            const mensajeWhatsapp = `Hola Ali y Nico, *NUEVA RESERVA*%0A%0A` +
+                                    `Huesped: ${nombre} (${habitacion})%0A` +
+                                    `Fecha: ${entrada} al ${salida}%0A` +
+                                    `Seña: $${sena} / Resta: $${saldo}%0A` +
+                                    `Estado: ${estado}`;
             
             // Usamos la variable de configuración para decidir el destino
             const whatsappUrl = `https://wa.me/${NUMERO_DUENOS}?text=${mensajeWhatsapp}`;
@@ -403,12 +403,12 @@
             });
             const totalVendido = reservasMes.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
-            const mensaje = `📊 *REPORTE MENSUAL - ${mesNombre.toUpperCase()}*%0A%0A` +
+            const mensaje = `*REPORTE MENSUAL - ${mesNombre.toUpperCase()}*%0A%0A` +
                             `Hospedaje La Frontera%0A` +
                             `--------------------------------%0A` +
-                            `✅ *Cant. Reservas:* ${cantidad}%0A` +
-                            `💵 *Total Señas (Caja):* ${senas}%0A` +
-                            `📈 *Venta Total Proyectada:* $${totalVendido.toLocaleString('es-AR')}%0A` +
+                            `*Cant. Reservas:* ${cantidad}%0A` +
+                            `*Total Señas (Caja):* ${senas}%0A` +
+                            `*Venta Total Proyectada:* $${totalVendido.toLocaleString('es-AR')}%0A` +
                             `--------------------------------%0A` +
                             `Generado automáticamete desde Recepción.`;
             
